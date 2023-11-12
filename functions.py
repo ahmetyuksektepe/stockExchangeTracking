@@ -1,14 +1,37 @@
 from bs4 import BeautifulSoup
 import requests,pandas,xlsxwriter
-
+import os
+import matplotlib.pyplot as plt
 
 
 URL = "https://borsa.doviz.com/hisseler"
 RASYO_URL_TEMPLATE = "https://www.isyatirim.com.tr/tr-tr/analiz/hisse/Sayfalar/sirket-karti.aspx?hisse="
 
+hisse_list = [
+    "YEOTK",
+    "EUPWR",
+    "CWENE",
+    "AKBNK",
+    "KCHOL",
+    "AKFYE",
+    "AKFGY",
+    "AKSA",
+    "AKSEN",
+    "AKCNS",
+    "AHGAZ",
+    "AEFES",
+    "AGHOL",
+    "ALBRK",
+    "ISMEN",
+    "KCHOL",
+    "A1CAP",
+    "ACSEL"
+    ]
+hisse_verileri_dict = {}
 
 #Hissenin temel bilgilerini getirir
 def hisse_temel():
+    global data
     data = []
     result = requests.get(URL)
     doc = BeautifulSoup(result.text, "html.parser")
@@ -52,3 +75,39 @@ def excel_yazdir(data:list):
 
 def rasyo_degerleri(data:list):
     pass
+
+def eski_veri():
+    for hisse in hisse_list:
+        dosya_adi = hisse + '.xlsx'
+        dosya_yolu = os.path.join('bist100Gecmis', dosya_adi)
+        if os.path.exists(dosya_yolu):
+            df = pandas.read_excel(dosya_yolu)
+            hisse_verileri_dict[hisse + "_s1"] = df.iloc[::7, 0]
+            hisse_verileri_dict[hisse + "_s2"] = df.iloc[::7, 1]
+        else:
+            print(f"{dosya_yolu} bulunamadı.")
+
+
+
+def eski_veri_cek(isim):
+    hisse_adi = isim  
+    if hisse_adi in hisse_verileri_dict:
+        hisse_verileri = hisse_verileri_dict[hisse_adi]
+        print(f"{hisse_adi} hissesinin verileri: {hisse_verileri}")
+    else:
+        print(f"{hisse_adi} hissesi bulunamadı.")
+
+def cizim_yap(isim):
+    x = hisse_verileri_dict[isim+ "_s1"]
+    y = hisse_verileri_dict[isim+ "_s2"]
+
+    # Scatter plot çizimi
+    plt.plot(x, y, color='blue', linestyle='-', linewidth=2, label=isim)
+    plt.xlabel("Tarih")
+    plt.ylabel("Fiyat")
+    plt.title(isim + " Fiyat Geçmişi")
+   
+    #for i, txt in enumerate(y):
+      #  plt.annotate(txt, (x.iloc[i], y.iloc[i]), textcoords="offset points", xytext=(0,10), ha='center')
+
+    plt.show()
