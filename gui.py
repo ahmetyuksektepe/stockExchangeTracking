@@ -23,8 +23,8 @@ favoriler = []
 tabview = customtkinter.CTkTabview(master=root)
 tabview.pack(expand=True, fill="both")
 
-tabview.add("Ana Sayfa")  # add tab at the end
-tabview.add("Hisse Performansı")  # add tab at the end
+tabview.add("Ana Sayfa")  
+tabview.add("Hisse Performansı")  
 tabview.add("Portföy")
 tabview.add("Favoriler")
 
