@@ -2,69 +2,128 @@ from bs4 import BeautifulSoup
 import requests,pandas,xlsxwriter
 import os
 import matplotlib.pyplot as plt
-
+from collections import deque
 
 URL = "https://borsa.doviz.com/hisseler"
 RASYO_URL_TEMPLATE = "https://www.isyatirim.com.tr/tr-tr/analiz/hisse/Sayfalar/sirket-karti.aspx?hisse="
 
-hisse_list = [
-    "YEOTK",
-    "EUPWR",
-    "CWENE",
-    "AKBNK",
-    "KCHOL",
-    "AKFYE",
-    "AKFGY",
-    "AKSA",
-    "AKSEN",
-    "AKCNS",
-    "AHGAZ",
-    "AEFES",
-    "AGHOL",
-    "ALBRK",
-    "ISMEN",
-    "KCHOL",
-    "A1CAP",
-    "ACSEL"
-    ]
+klasor_yolu = r'D:\1\words\BilgisayarMuhendisligi\Sinif2\Donem1\veriyapilariproje\veriYapilari\bist100Gecmis' #başka bilgisayarlardaki bist100Gecmis'in dosya yoluyla güncellenebilir
+
+# .xlsx dosyaları bul diziye ekle
+dosya_isimleri = [dosya for dosya in os.listdir(klasor_yolu) if dosya.endswith('.xlsx')]
+
+#plot çizim için sözlük yapısı
 hisse_verileri_dict = {}
 
-#Hissenin temel bilgilerini getirir
+#kuyruk sınıfı
+class Kuyruk:
+    def __init__(self):
+        self.queue = deque()
+
+    def enqueue(self, data):
+        self.queue.appendleft(data)
+
+    def dequeue(self):
+        return self.queue.pop()
+
+    def is_empty(self):
+        return len(self.queue) == 0
+    
+    def length(self):
+        return len(self.queue)
+
+    def hisse_kodu_ara(self, kodu):
+        for hisse in self.queue:
+            if hisse["Hisse_Kodu"] == kodu:
+                return hisse
+    
+    def hisse_bilgi_al(self, kodu):
+        for hisse in self.queue:
+            if hisse["Hisse_Kodu"] == kodu:
+                araya_eklenecek_bosluk = " " * 60
+                deger = araya_eklenecek_bosluk.join([hisse["Hisse_Kodu"], hisse["Anlik fiyat"], hisse["Degisim:"]])
+                return deger
+        return None
+    
+    def hisse_fiyat_al(self, kodu):
+        for hisse in self.queue:
+            if hisse["Hisse_Kodu"] == kodu:
+                return hisse["Anlik fiyat"]
+        return None
+
+global kuyruk_favori
+kuyruk_favori = Kuyruk()
+kuyruk_portfoy = Kuyruk()
+kuyruk_verisi = Kuyruk()
+
 def hisse_temel():
-    global data
-    data = []
+    global kuyruk_verisi 
     result = requests.get(URL)
     doc = BeautifulSoup(result.text, "html.parser")
     tbody = doc.tbody
     trs = tbody.find_all("tr")
+
     for tr in trs:
         td_list = tr.find_all("td")[1:7]
         if len(td_list) == 6:
             anlik, yuksek, dusuk, hacim, degisim, saat = td_list
             hisse_adi = tr['data-name'].split('-')
             hisse = {
-                "Hisse Adi":hisse_adi[1],
-                "Hisse Kodu":hisse_adi[0],
-                "Anlik fiyat":anlik.text.strip(),
+                "Hisse Adi": hisse_adi[1],
+                "Hisse_Kodu": hisse_adi[0],
+                "Anlik fiyat": anlik.text.strip(),
                 "Yuksek": yuksek.text.strip(),
-                "Dusuk":dusuk.text.strip(),
-                "Hacim":hacim.text.strip(),
-                "Degisim:":degisim.text.strip(),
-                "Saat":saat.text.strip(),
-                # "F/K":rasyo_list[0],
-                # "FD/FAVÖK":rasyo_list[1],
-                # "PD/DD":rasyo_list[2],
-                # "FD/Satışlar":rasyo_list[3],
-                # "Yabancı Oranı (%)":rasyo_list[4],
-                # "Ort Hacim (mn$) 3A/12A":rasyo_list[5],
-                # "Piyasa Değeri":rasyo_list[6],
-                # "Net Borç":rasyo_list[7],
-                # "Yurtdışı Çarpan İskontosu (%)":rasyo_list[8],
-                # "Halka Açıklık Oranı (%)":rasyo_list[9],
+                "Dusuk": dusuk.text.strip(),
+                "Hacim": hacim.text.strip(),
+                "Degisim:": degisim.text.strip(),
+                "Saat": saat.text.strip()
             }
-            
-            data.append(hisse)
-    return data            
+            kuyruk_verisi.enqueue(hisse)
+    return kuyruk_verisi
+#açılışta çalışması için
+hisse_temel()
+
+#hisse arama
+def hisse_bul(aranan_hisse_kodu, islem):
+    hisse_temel()
+    #global kuyruk_favori
+    global kuyruk_portfoy
+    
+    print(aranan_hisse_kodu)#sil
+    bulunan_hisse = kuyruk_verisi.hisse_kodu_ara(aranan_hisse_kodu)
+    
+    if bulunan_hisse is not None: #önce ara
+        
+        if islem == "favEkle":
+            kuyruk_favori.enqueue(bulunan_hisse)
+            print(kuyruk_favori.length())
+            return kuyruk_favori
+        elif islem == "favSil":
+            kuyruk_favori.dequeue()
+            return kuyruk_favori
+        elif islem == "prtEkle":
+            kuyruk_portfoy.enqueue(bulunan_hisse)
+            hisse_isim = kuyruk_verisi.hisse_bilgi_al(aranan_hisse_kodu)
+            return hisse_isim
+        elif islem == "prtSil":
+            kuyruk_portfoy.dequeue()
+            return kuyruk_portfoy
+        else:
+            return "Bulunamadı"
+    else:
+        print(f"{bulunan_hisse} hisse koduna sahip hisse bulunamadı.")
+        
+def hisse_fiyat_bul(aranan_hisse_kodu):
+    hisse_temel()
+    global kuyruk_favori
+    global kuyruk_portfoy
+    kuyruk_favori = Kuyruk()
+    kuyruk_portfoy = Kuyruk()
+    print(aranan_hisse_kodu)#sil
+    bulunan_hisse = kuyruk_verisi.hisse_fiyat_al(aranan_hisse_kodu)
+    
+    return bulunan_hisse
+    
 
 #Data'yı excele yazdırır
 def excel_yazdir(data:list):
@@ -76,28 +135,31 @@ def excel_yazdir(data:list):
 def rasyo_degerleri(data:list):
     pass
 
+#Excelden eski verileri alır ve sözlük yapısı olarak kaydeder
 def eski_veri():
-    for hisse in hisse_list:
-        dosya_adi = hisse + '.xlsx'
+    for hisse in dosya_isimleri:
+        dosya_adi = hisse
         dosya_yolu = os.path.join('bist100Gecmis', dosya_adi)
         if os.path.exists(dosya_yolu):
             df = pandas.read_excel(dosya_yolu)
-            hisse_verileri_dict[hisse + "_s1"] = df.iloc[::7, 0]
+            hisse_verileri_dict[hisse + "_s1"] = df.iloc[::7, 0] #7şer 0. sütun
             hisse_verileri_dict[hisse + "_s2"] = df.iloc[::7, 1]
         else:
             print(f"{dosya_yolu} bulunamadı.")
 
 
-
+#kullanılmıyor
 def eski_veri_cek(isim):
-    hisse_adi = isim  
+    hisse_adi = isim  #kchol ve _s1 gui.py'den alınacak
     if hisse_adi in hisse_verileri_dict:
         hisse_verileri = hisse_verileri_dict[hisse_adi]
         print(f"{hisse_adi} hissesinin verileri: {hisse_verileri}")
     else:
         print(f"{hisse_adi} hissesi bulunamadı.")
 
+#istenen hissenin grafiğini çizer
 def cizim_yap(isim):
+    # KCHOL_s1 ve KCHOL_s2 verilerini al
     x = hisse_verileri_dict[isim+ "_s1"]
     y = hisse_verileri_dict[isim+ "_s2"]
 
@@ -111,3 +173,4 @@ def cizim_yap(isim):
       #  plt.annotate(txt, (x.iloc[i], y.iloc[i]), textcoords="offset points", xytext=(0,10), ha='center')
 
     plt.show()
+    
