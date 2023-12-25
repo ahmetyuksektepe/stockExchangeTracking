@@ -5,7 +5,6 @@ import matplotlib.pyplot as plt
 from collections import deque
 
 URL = "https://borsa.doviz.com/hisseler"
-RASYO_URL_TEMPLATE = "https://www.isyatirim.com.tr/tr-tr/analiz/hisse/Sayfalar/sirket-karti.aspx?hisse="
 
 klasor_yolu = r'D:\1\words\BilgisayarMuhendisligi\Sinif2\Donem1\veriyapilariproje\veriYapilari\bist100Gecmis' #başka bilgisayarlardaki bist100Gecmis'in dosya yoluyla güncellenebilir
 
@@ -51,9 +50,7 @@ class Kuyruk:
                 return hisse["Anlik fiyat"]
         return None
 
-global kuyruk_favori
-kuyruk_favori = Kuyruk()
-kuyruk_portfoy = Kuyruk()
+#kuyruk_portfoy = Kuyruk()
 kuyruk_verisi = Kuyruk()
 
 def hisse_temel():
@@ -86,54 +83,38 @@ hisse_temel()
 #hisse arama
 def hisse_bul(aranan_hisse_kodu, islem):
     hisse_temel()
-    #global kuyruk_favori
-    global kuyruk_portfoy
+    #global kuyruk_portfoy
     
-    print(aranan_hisse_kodu)#sil
+    #print(aranan_hisse_kodu)#sil
     bulunan_hisse = kuyruk_verisi.hisse_kodu_ara(aranan_hisse_kodu)
     
     if bulunan_hisse is not None: #önce ara
         
         if islem == "favEkle":
-            kuyruk_favori.enqueue(bulunan_hisse)
-            print(kuyruk_favori.length())
-            return kuyruk_favori
+            return bulunan_hisse
         elif islem == "favSil":
-            kuyruk_favori.dequeue()
-            return kuyruk_favori
+            return bulunan_hisse
         elif islem == "prtEkle":
-            kuyruk_portfoy.enqueue(bulunan_hisse)
+            #kuyruk_portfoy.enqueue(bulunan_hisse)
             hisse_isim = kuyruk_verisi.hisse_bilgi_al(aranan_hisse_kodu)
             return hisse_isim
         elif islem == "prtSil":
-            kuyruk_portfoy.dequeue()
-            return kuyruk_portfoy
+            #kuyruk_portfoy.dequeue()
+            #return kuyruk_portfoy
+            pass
         else:
             return "Bulunamadı"
     else:
         print(f"{bulunan_hisse} hisse koduna sahip hisse bulunamadı.")
         
 def hisse_fiyat_bul(aranan_hisse_kodu):
-    hisse_temel()
-    global kuyruk_favori
-    global kuyruk_portfoy
-    kuyruk_favori = Kuyruk()
-    kuyruk_portfoy = Kuyruk()
-    print(aranan_hisse_kodu)#sil
+    #hisse_temel()
+    #global kuyruk_portfoy
+    #kuyruk_portfoy = Kuyruk()
+    #print(aranan_hisse_kodu)#sil
     bulunan_hisse = kuyruk_verisi.hisse_fiyat_al(aranan_hisse_kodu)
     
     return bulunan_hisse
-    
-
-#Data'yı excele yazdırır
-def excel_yazdir(data:list):
-    df = pandas.DataFrame(data)
-    writer = pandas.ExcelWriter("datas.xlsx",engine="xlsxwriter")
-    df.to_excel(writer,sheet_name="Sheet1",index=False)
-    writer.close()
-
-def rasyo_degerleri(data:list):
-    pass
 
 #Excelden eski verileri alır ve sözlük yapısı olarak kaydeder
 def eski_veri():
@@ -147,19 +128,8 @@ def eski_veri():
         else:
             print(f"{dosya_yolu} bulunamadı.")
 
-
-#kullanılmıyor
-def eski_veri_cek(isim):
-    hisse_adi = isim  #kchol ve _s1 gui.py'den alınacak
-    if hisse_adi in hisse_verileri_dict:
-        hisse_verileri = hisse_verileri_dict[hisse_adi]
-        print(f"{hisse_adi} hissesinin verileri: {hisse_verileri}")
-    else:
-        print(f"{hisse_adi} hissesi bulunamadı.")
-
 #istenen hissenin grafiğini çizer
 def cizim_yap(isim):
-    # KCHOL_s1 ve KCHOL_s2 verilerini al
     x = hisse_verileri_dict[isim+ "_s1"]
     y = hisse_verileri_dict[isim+ "_s2"]
 
