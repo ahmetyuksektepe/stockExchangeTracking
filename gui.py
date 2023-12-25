@@ -1,11 +1,40 @@
-from tkinter import *
 import tkinter as tk
-from tkinter import messagebox
+from tkinter import messagebox, filedialog, ttk
 from PIL import ImageTk, Image
-from tkinter import filedialog
-from tkinter import ttk
 import functions
 import customtkinter
+from collections import deque
+
+class Queue:
+    def __init__(self):
+        self.queue = deque()
+
+    def enqueue(self, data):
+        self.queue.appendleft(data)
+
+    def dequeue(self):
+        return self.queue.pop()
+
+    def is_empty(self):
+        return len(self.queue) == 0
+    
+    def length(self):
+        return len(self.queue)
+    
+    def ara_ve_sil(self, target):
+        # Kuyruk içinde arama yap
+        for item in self.queue:
+            # " " ile birleştirilen hisse adını karşılaştır
+            if item["Hisse_Kodu"] == target:
+                self.queue.remove(item)
+                return item  # İlgili öğeyi bulup sildiysek, öğeyi döndür
+        return None  # Öğe bulunamadı
+
+
+# Örnek kullanım:
+global kuyruk
+kuyruk = Queue()
+
 
 #arayüz genel özellikleri
 customtkinter.set_appearance_mode("dark")
@@ -40,6 +69,10 @@ frame_left = customtkinter.CTkFrame(master=tabview.tab("Ana Sayfa"), width=1600,
 frame_left.pack( expand=True)
 portfoy_frame = customtkinter.CTkScrollableFrame(master=tabview.tab("Portföy"))
 portfoy_frame.pack(fill="both", side="top", expand=True)
+favori_frame = customtkinter.CTkFrame(master=tabview.tab("Favoriler")).grid()
+
+
+tree2 = ttk.Treeview(master=tabview.tab("Favoriler"))
 
 
 def graph():
@@ -77,40 +110,54 @@ def fiyat_guncelle():
 
 fiyat_guncelle()
 
-#her defasında son yazılanı ekliyor DÜZELTİLECEK
+#her defasında son yazılanı ekliyor DÜZELTİLECEK* düzeltildi
 def favori_islem(islem):
     aranan_hisse = entry.get().upper() + " "
-    functions.kuyruk_favori = functions.hisse_bul(aranan_hisse, islem)
-    
-    if functions.kuyruk_favori is None:
-        messagebox.showerror("Hata", "Hisse bulunamadı")
-    
-    else:
-        # Treeview'ı oluştur
-        tree2 = ttk.Treeview(master=tabview.tab("Favoriler"))
-        tree2["columns"] = tuple(functions.kuyruk_favori.queue[0].keys())
+    found_data = functions.hisse_bul(aranan_hisse, islem)
 
-        # Sütun başlıklarını ayarla
+    if found_data is None:
+        messagebox.showerror("Hata", "Hisse bulunamadı")
+    else:
+        kuyruk.enqueue(found_data)
+        print(kuyruk.length())
+        tree_olustur()
+       
+def favori_islem_sil():
+    silinecek_hisse = entry_favsil.get().upper() + " "
+
+    print("Silinmeye çalışılan hisse:", silinecek_hisse)
+    
+    # Kuyruk verilerini göster test
+    print("Kuyruk verileri:", kuyruk.queue)
+    
+    kuyruk.ara_ve_sil(silinecek_hisse)
+
+    # Kuyruk verilerini göster test
+    print("Kuyruk verileri:", kuyruk.queue)
+    print(kuyruk.length())
+    tree_olustur()
+    
+
+def tree_olustur():
+        found_data = functions.hisse_bul("YEOTK ", "favEkle")
+        # Treeview'ı temizle
+        for item in tree2.get_children():
+                tree2.delete(item)
+
+        # Sütunları ayarla
+        tree2["columns"] = tuple(found_data.keys())
         for column in tree2["columns"]:
             tree2.heading(column, text=column)
             tree2.column(column, anchor="center")
-        
-        # Stil tanımla
-        style = ttk.Style()
-        style.configure("Treeview", font=("Helvetica", 14), foreground="white", background="#122836")
-        style.configure("Treeview.Heading", font=("Helvetica", 20), foreground="black", background="#122836", borderwidth=30)
-        style.map("Treeview", foreground=[("selected", "white")], background=[("selected", "green")])
-    
-        if islem == "favEkle":
-            i = functions.kuyruk_favori.length()
-            while not functions.kuyruk_favori.is_empty():
-                hisse = functions.kuyruk_favori.dequeue()
-                tree2.insert("", i, values=tuple(hisse.values()))
-                i -= 1
-    
+
+        # Veriyi ayrı sütunlara ekleyerek tree2'ye ekle
+        i = 0
+        for hisse in kuyruk.queue:
+            tree2.insert("", i, values=tuple(hisse.values()))
+            i += 1
+
         # Treeview'ı göster
         tree2.grid(row=0, column=0, sticky="nsew")
-    
     
     
 def portfoy_islem(islem):
@@ -136,11 +183,6 @@ def portfoy_islem(islem):
 
 #
 
-
-
-#tree 2
-
-
 my_combo = customtkinter.CTkComboBox(master=tabview.tab("Hisse Performansı"), values=dosya_isim,  height=50, width=150, corner_radius=30, border_width=2)
 my_combo.pack()
 
@@ -156,10 +198,6 @@ button = customtkinter.CTkButton(master=tabview.tab("Hisse Performansı"),
                                  border_spacing=10,
                                  font=("Helvetica", 20))
 button.pack(padx=20, pady=20)
-
-'''kategori_label = customtkinter.CTkLabel(master=portfoy_frame_top, text_color="red", text="HİSSE        FİYAT       EN YÜKSEK      EN DÜŞÜK      DEĞİŞİM(%)             HACİM             SAAT", font=("Helvetica", 20), anchor="sw", padx=30, pady=30)
-kategori_label.pack(side="top", fill="both")'''
-
 
 yenile = customtkinter.CTkButton(master=tabview.tab("Ana Sayfa"), text="Verileri yenile", anchor="center", command=fiyat_guncelle)
 yenile.pack(padx=20, pady=20)
@@ -178,6 +216,11 @@ entry3.pack(side="right")
 entry4.pack(side="right")
 ekle_btn = customtkinter.CTkButton(master=tabview.tab("Ana Sayfa"), text="Al", command=lambda: portfoy_islem("prtEkle"))
 ekle_btn.pack(side="right")
+
+entry_favsil = customtkinter.CTkEntry(master=tabview.tab("Favoriler"), placeholder_text="Hisse Adı Giriniz")
+entry_favsil.grid(padx=10, pady=5)
+fav_sil = customtkinter.CTkButton(master=tabview.tab("Favoriler"), text="sil", command=lambda: favori_islem_sil())
+fav_sil.grid()
 
 araya_eklenecek_bosluk = " " * 47
 deger = araya_eklenecek_bosluk.join(["HİSSE", "FİYAT", "DEGİSİM"])
