@@ -24,14 +24,12 @@ class Queue:
     def ara_ve_sil(self, target):
         # Kuyruk içinde arama yap
         for item in self.queue:
-            # " " ile birleştirilen hisse adını karşılaştır
             if item["Hisse_Kodu"] == target:
                 self.queue.remove(item)
                 return item  # İlgili öğeyi bulup sildiysek, öğeyi döndür
         return None  # Öğe bulunamadı
 
 
-# Örnek kullanım:
 global kuyruk
 kuyruk = Queue()
 
@@ -46,7 +44,6 @@ root.geometry("1600x900")
 root.resizable(width="true", height="true")
 
 
-#functions.hisse_temel() silinebilir
 functions.eski_veri()
 dosya_isim = functions.dosya_isimleri
 
@@ -96,10 +93,9 @@ def fiyat_guncelle():
     while not functions.kuyruk_verisi.is_empty():
         hisse = functions.kuyruk_verisi.dequeue()
         tree1.insert("", i, values=tuple(hisse.values()))
-        print(hisse["Anlik fiyat"])
         i += 1
         
-    # Stil tanımla
+    # Stil 
     style = ttk.Style()
     style.configure("Treeview", font=("Helvetica", 14), foreground="white", background="#122836")
     style.configure("Treeview.Heading", font=("Helvetica", 20), foreground="black", background="#122836", borderwidth=30)
@@ -110,7 +106,6 @@ def fiyat_guncelle():
 
 fiyat_guncelle()
 
-#her defasında son yazılanı ekliyor DÜZELTİLECEK* düzeltildi
 def favori_islem(islem):
     aranan_hisse = entry.get().upper() + " "
     found_data = functions.hisse_bul(aranan_hisse, islem)
@@ -161,7 +156,6 @@ def tree_olustur():
     
     
 def portfoy_islem(islem):
-    #HİSSE ADI, GÜNCEL FIYATI VE KAR ZARAR ORANI YAZMALI
     aranan_hisse = entry2.get().upper() + " "
     hisse = functions.hisse_bul(aranan_hisse, islem)
     
@@ -181,7 +175,6 @@ def portfoy_islem(islem):
             hisse_adi.pack(side="top", fill="x")
          
 
-#
 
 my_combo = customtkinter.CTkComboBox(master=tabview.tab("Hisse Performansı"), values=dosya_isim,  height=50, width=150, corner_radius=30, border_width=2)
 my_combo.pack()
