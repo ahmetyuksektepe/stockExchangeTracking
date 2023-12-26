@@ -50,7 +50,6 @@ class Kuyruk:
                 return hisse["Anlik fiyat"]
         return None
 
-#kuyruk_portfoy = Kuyruk()
 kuyruk_verisi = Kuyruk()
 
 def hisse_temel():
@@ -83,9 +82,6 @@ hisse_temel()
 #hisse arama
 def hisse_bul(aranan_hisse_kodu, islem):
     hisse_temel()
-    #global kuyruk_portfoy
-    
-    #print(aranan_hisse_kodu)#sil
     bulunan_hisse = kuyruk_verisi.hisse_kodu_ara(aranan_hisse_kodu)
     
     if bulunan_hisse is not None: #önce ara
@@ -95,25 +91,15 @@ def hisse_bul(aranan_hisse_kodu, islem):
         elif islem == "favSil":
             return bulunan_hisse
         elif islem == "prtEkle":
-            #kuyruk_portfoy.enqueue(bulunan_hisse)
             hisse_isim = kuyruk_verisi.hisse_bilgi_al(aranan_hisse_kodu)
             return hisse_isim
-        elif islem == "prtSil":
-            #kuyruk_portfoy.dequeue()
-            #return kuyruk_portfoy
-            pass
         else:
             return "Bulunamadı"
     else:
         print(f"{bulunan_hisse} hisse koduna sahip hisse bulunamadı.")
         
 def hisse_fiyat_bul(aranan_hisse_kodu):
-    #hisse_temel()
-    #global kuyruk_portfoy
-    #kuyruk_portfoy = Kuyruk()
-    #print(aranan_hisse_kodu)#sil
     bulunan_hisse = kuyruk_verisi.hisse_fiyat_al(aranan_hisse_kodu)
-    
     return bulunan_hisse
 
 #Excelden eski verileri alır ve sözlük yapısı olarak kaydeder
